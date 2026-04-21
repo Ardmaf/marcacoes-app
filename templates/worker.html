@@ -8,123 +8,71 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
-}
-
 body {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 30px 15px;
+    font-family: 'Inter', sans-serif;
     background: radial-gradient(circle at top,#1b1b2a,#0b0b10);
     color: white;
+    display: flex;
+    justify-content: center;
+    padding: 30px;
 }
 
 .container {
+    max-width: 500px;
     width: 100%;
-    max-width: 520px;
     background: rgba(255,255,255,0.06);
     backdrop-filter: blur(20px);
-    border-radius: 28px;
+    border-radius: 25px;
     padding: 25px;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
-h1 {
-    text-align: center;
-    font-size: 26px;
-}
+h1 {text-align:center;}
+.subtitle {text-align:center; opacity:.6; margin-bottom:20px;}
 
-.subtitle {
-    text-align: center;
-    opacity: 0.6;
-    font-size: 13px;
-    margin-bottom: 20px;
-}
-
-.item {
-    padding: 12px;
-    border-radius: 12px;
-    transition: 0.2s;
-}
-
-.item:hover {
-    background: rgba(255,255,255,0.1);
-    transform: scale(1.02);
-}
-    
-/* FORM */
 input, select {
-    width: 100%;
-    padding: 14px;
-    margin-top: 12px;
-    border-radius: 14px;
-    border: none;
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border-radius:12px;
+    border:none;
     background: rgba(255,255,255,0.08);
-    color: white;
-    outline: none;
+    color:white;
 }
 
-/* SLOTS */
 .slot-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 15px;
+    display:grid;
+    grid-template-columns: repeat(3,1fr);
+    gap:10px;
+    margin-top:15px;
 }
 
 .slot {
-    padding: 12px;
-    border-radius: 14px;
-    text-align: center;
+    padding:12px;
+    text-align:center;
+    border-radius:12px;
+    cursor:pointer;
     background: rgba(255,255,255,0.08);
-    cursor: pointer;
-    transition: 0.2s;
-    font-size: 14px;
+    transition:0.2s;
 }
 
-.slot:hover {
-    transform: scale(1.05);
-    background: rgba(255,255,255,0.15);
+.slot:hover {transform:scale(1.05);}
+.slot.selected {background: linear-gradient(135deg,#4f9cff,#6c5ce7);}
+.slot.disabled {
+    opacity:0.3;
+    pointer-events:none;
 }
 
-.slot.selected {
-    background: linear-gradient(135deg,#4f9cff,#6c5ce7);
-}
-
-    
-/* BUTTON */
 button {
-    width: 100%;
-    padding: 15px;
-    margin-top: 20px;
-    border: none;
-    border-radius: 16px;
+    width:100%;
+    padding:15px;
+    margin-top:20px;
+    border:none;
+    border-radius:12px;
     background: linear-gradient(135deg,#4f9cff,#6c5ce7);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
+    color:white;
 }
 
-button:active {
-    transform: scale(0.98);
-}
-
-/* LOADING */
-.loading {
-    display: none;
-    text-align: center;
-    margin-top: 10px;
-    opacity: 0.6;
-    font-size: 13px;
-}
-
+.loading {display:none; margin-top:10px;}
 </style>
 </head>
 
@@ -132,62 +80,100 @@ button:active {
 
 <div class="container">
 
-    <h1>{{ name }}</h1>
-    <div class="subtitle">Escolhe o teu horário</div>
+<h1>{{ name }}</h1>
+<div class="subtitle">Escolhe o teu horário</div>
 
-    <form id="form">
+<form id="form">
 
-        <input name="nome" placeholder="O teu nome" required>
+<input name="nome" placeholder="Nome" required>
 
-        <select name="servico">
-            <option>Corte</option>
-            <option>Barba</option>
-            <option>Corte + Barba</option>
-        </select>
+<select name="servico">
+<option>Corte</option>
+<option>Barba</option>
+<option>Corte + Barba</option>
+</select>
 
-        <input type="date" name="date" value="{{ selected_date }}" required>
+<input type="date" id="date" name="date" value="{{ selected_date }}" required>
 
-        <!-- SLOTS -->
-        <div class="slot-grid" id="slots">
-            {% for slot in slots %}
-                <div class="slot" onclick="selectSlot(this, '{{ slot }}')">
-                    {{ slot }}
-                </div>
-            {% endfor %}
-        </div>
+<div class="slot-grid" id="slots"></div>
 
-        <input type="hidden" name="time" id="time">
+<input type="hidden" name="time" id="time">
 
-        <button type="submit">Confirmar marcação</button>
+<div id="msg"></div>
 
-        <div id="msg" style="margin-top:10px;"></div>
+<button type="submit">Confirmar</button>
 
-        <div class="loading" id="loading">A processar marcação...</div>
+<div class="loading" id="loading">A processar...</div>
 
-    </form>
+</form>
 
 </div>
 
 <script>
 let selected = null;
+const slug = window.location.pathname.replace("/", "");
 
+const ALL_SLOTS = [
+"09:00","09:30","10:00","10:30",
+"11:00","11:30","12:00","12:30",
+"14:00","14:30","15:00","15:30",
+"16:00","16:30","17:00"
+];
+
+// 🔥 carregar slots dinamicamente
+async function loadSlots(){
+    const date = document.getElementById("date").value;
+    if(!date) return;
+
+    const res = await fetch(`/api/slots/${slug}?date=${date}`);
+    const data = await res.json();
+
+    const container = document.getElementById("slots");
+    container.innerHTML = "";
+
+    ALL_SLOTS.forEach(slot => {
+        const div = document.createElement("div");
+        div.className = "slot";
+        div.innerText = slot;
+
+        if(!data.slots.includes(slot)){
+            div.classList.add("disabled");
+        } else {
+            div.onclick = () => selectSlot(div, slot);
+        }
+
+        container.appendChild(div);
+    });
+}
+
+// seleção com animação iOS
 function selectSlot(el, value){
     document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
     el.classList.add('selected');
+
+    el.animate([
+        {transform:"scale(1)"},
+        {transform:"scale(1.15)"},
+        {transform:"scale(1)"}
+    ], {duration:200});
+
     selected = value;
-    document.getElementById('time').value = value;
+    document.getElementById("time").value = value;
 }
 
+// mudar data → atualizar slots
+document.getElementById("date").addEventListener("change", loadSlots);
+
+// submit AJAX
 document.getElementById("form").addEventListener("submit", async function(e){
     e.preventDefault();
 
     if(!selected){
-        alert("Escolhe um horário primeiro");
+        alert("Escolhe um horário");
         return;
     }
 
-    const form = e.target;
-    const data = new FormData(form);
+    const data = new FormData(e.target);
 
     document.getElementById("loading").style.display = "block";
 
@@ -198,21 +184,22 @@ document.getElementById("form").addEventListener("submit", async function(e){
 
     const result = await res.json();
 
-    const msg = document.getElementById("msg");
-
     document.getElementById("loading").style.display = "none";
 
+    const msg = document.getElementById("msg");
+
     if(result.success){
-        msg.innerHTML = "✅ Marcação feita com sucesso!";
+        msg.innerHTML = "✅ Marcado!";
         msg.style.color = "#4ade80";
-
-        setTimeout(() => location.reload(), 1200);
-
+        loadSlots();
     } else {
         msg.innerHTML = "❌ " + result.error;
         msg.style.color = "#ff6b6b";
     }
 });
+
+// carregar ao abrir
+loadSlots();
 </script>
 
 </body>

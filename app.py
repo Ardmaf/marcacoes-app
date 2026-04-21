@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, render_template_string
+from flask import Flask, request, render_template, render_template_string, jsonify
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -141,14 +141,14 @@ def worker_public(slug):
         )
 
         if cur and cur.fetchone():
-            return "❌ Horário já ocupado"
+            return jsonify({"success": False, "error": "Horário já ocupado"})
 
         db_query("""
             INSERT INTO bookings (worker_id, client_name, service, date)
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
 
-        return redirect(f"/{slug}?success=1")
+        return jsonify({"success": True})
 
     # =========================
     # GET → slots sempre calculados aqui

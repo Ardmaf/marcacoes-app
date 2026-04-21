@@ -8,101 +8,123 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Inter',sans-serif;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
 }
 
-body{
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background: radial-gradient(circle at top,#0f172a,#020617);
-    color:white;
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 30px 15px;
+    background: radial-gradient(circle at top,#1b1b2a,#0b0b10);
+    color: white;
 }
 
-.card{
-    width:100%;
-    max-width:520px;
-    padding:28px;
-    border-radius:28px;
+.container {
+    width: 100%;
+    max-width: 520px;
     background: rgba(255,255,255,0.06);
     backdrop-filter: blur(20px);
-    border:1px solid rgba(255,255,255,0.1);
-    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    border-radius: 28px;
+    padding: 25px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
-h1{
-    font-size:24px;
-    margin-bottom:6px;
+h1 {
+    text-align: center;
+    font-size: 26px;
 }
 
-.subtitle{
-    font-size:13px;
-    opacity:0.6;
-    margin-bottom:20px;
+.subtitle {
+    text-align: center;
+    opacity: 0.6;
+    font-size: 13px;
+    margin-bottom: 20px;
 }
 
-input, select{
-    width:100%;
-    padding:14px;
-    margin-bottom:10px;
-    border-radius:16px;
-    border:1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05);
-    color:white;
-    outline:none;
+/* FORM */
+input, select {
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    border-radius: 14px;
+    border: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    outline: none;
 }
 
-button{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:16px;
+/* SLOTS */
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.slot {
+    padding: 12px;
+    border-radius: 14px;
+    text-align: center;
+    background: rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 14px;
+}
+
+.slot:hover {
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.15);
+}
+
+.slot.selected {
     background: linear-gradient(135deg,#4f9cff,#6c5ce7);
-    color:white;
-    font-weight:600;
-    cursor:pointer;
-    transition:0.2s;
 }
 
-button:hover{
-    transform:scale(1.02);
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg,#4f9cff,#6c5ce7);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-.slots{
-    margin-top:15px;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
+button:active {
+    transform: scale(0.98);
 }
 
-.slot{
-    padding:10px;
-    border-radius:12px;
-    background: rgba(255,255,255,0.06);
-    text-align:center;
-    cursor:pointer;
-    font-size:13px;
+/* LOADING */
+.loading {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+    opacity: 0.6;
+    font-size: 13px;
 }
 
-.slot:hover{
-    background: rgba(255,255,255,0.12);
-}
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="container">
 
     <h1>{{ name }}</h1>
     <div class="subtitle">Escolhe o teu horário</div>
 
-    <form method="POST">
+    <form method="POST" id="form">
+
         <input name="nome" placeholder="O teu nome" required>
 
         <select name="servico">
@@ -113,22 +135,45 @@ button:hover{
 
         <input type="date" name="date" required>
 
-        <select name="time">
+        <!-- SLOTS -->
+        <div class="slot-grid" id="slots">
             {% for slot in slots %}
-                <option value="{{ slot }}">{{ slot }}</option>
+                <div class="slot" onclick="selectSlot(this, '{{ slot }}')">
+                    {{ slot }}
+                </div>
             {% endfor %}
-        </select>
+        </div>
+
+        <input type="hidden" name="time" id="time">
 
         <button type="submit">Confirmar marcação</button>
+
+        <div class="loading" id="loading">A processar marcação...</div>
+
     </form>
 
-    <div class="slots">
-        {% for slot in slots %}
-            <div class="slot">{{ slot }}</div>
-        {% endfor %}
-    </div>
-
 </div>
+
+<script>
+let selected = null;
+
+function selectSlot(el, value){
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    selected = value;
+    document.getElementById('time').value = value;
+}
+
+document.getElementById("form").addEventListener("submit", function(e){
+    if(!selected){
+        e.preventDefault();
+        alert("Escolhe um horário primeiro");
+        return;
+    }
+
+    document.getElementById("loading").style.display = "block";
+});
+</script>
 
 </body>
 </html>

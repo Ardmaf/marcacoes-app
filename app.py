@@ -113,9 +113,11 @@ FORM = """
 # =========================
 # HOME
 # =========================
+from flask import render_template
+
 @app.route("/")
 def home():
-    return render_template_string(open("homepage.html").read())
+    return render_template("home.html")
 
 # =========================
 # WORKER PAGE (CLIENTE)

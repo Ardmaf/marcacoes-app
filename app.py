@@ -173,8 +173,6 @@ def worker_public(slug):
     # GET SLOTS
     # =========================
     if request.method == "POST":
-        available_slots = SLOTS
-    else:
         available_slots = get_available_slots(worker_id, date) if date else SLOTS
 
     return render_template(

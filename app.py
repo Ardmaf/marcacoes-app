@@ -189,8 +189,9 @@ def debug2():
     return "WORKER ROUTE ATUAL"
     
 @app.route("/<slug>", methods=["GET", "POST"])
+    
 def worker_public(slug):
-    cursor.execute("SELECT id, name, token, active FROM workers WHERE slug=?", (slug,))
+    cursor.execute("SELECT id, name, token, active FROM workers WHERE slug=%s", (slug,))
     worker = cursor.fetchone()
 
     if not worker or worker[3] == 0:
@@ -224,7 +225,17 @@ def worker_public(slug):
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
         conn.commit()
+def get_available_slots(worker_id, date):
+   
+    cursor.execute("""
+        SELECT date FROM bookings
+        WHERE worker_id=%s AND date LIKE %s
+    """, (worker_id, date + "%"))
 
+    booked = [row[0][11:16] for row in cursor.fetchall()]
+
+    return [slot for slot in SLOTS if slot not in booked]
+    
         # =========================
         # GOOGLE CALENDAR EVENT
         # =========================
@@ -307,7 +318,7 @@ def callback():
     })
 
     cursor.execute(
-        "UPDATE workers SET token=? WHERE slug=?",
+        "UPDATE workers SET token=%s WHERE slug=%s",
         (token_json, slug)
     )
     conn.commit()
@@ -319,7 +330,7 @@ def callback():
 # =========================
 @app.route("/worker/<slug>")
 def worker_dashboard(slug):
-    cursor.execute("SELECT id FROM workers WHERE slug=?", (slug,))
+    cursor.execute("SELECT id FROM workers WHERE slug=%s", (slug,))
     worker = cursor.fetchone()
 
     if not worker:
@@ -330,7 +341,7 @@ def worker_dashboard(slug):
     cursor.execute("""
         SELECT client_name, service, date
         FROM bookings
-        WHERE worker_id=?
+        WHERE worker_id=%s
     """, (worker_id,))
 
     bookings = cursor.fetchall()
@@ -366,7 +377,7 @@ def create_worker():
     slug = request.form["slug"]
 
     cursor.execute(
-        "INSERT INTO workers (name, slug) VALUES (?, ?)",
+        "INSERT INTO workers (name, slug) VALUES (%s, %s)",
         (name, slug)
     )
     conn.commit()
@@ -386,7 +397,7 @@ def deactivate_worker():
     slug = request.form["slug"]
 
     cursor.execute(
-        "UPDATE workers SET active=0 WHERE slug=?",
+        "UPDATE workers SET active=0 WHERE slug=%s",
         (slug,)
     )
     conn.commit()

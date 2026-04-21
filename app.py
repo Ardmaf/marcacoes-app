@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, session, redirect, render_template_string
 import psycopg2
 import os
 from datetime import datetime
@@ -8,8 +8,6 @@ from datetime import datetime
 # =========================
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
-
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 ADMIN_PASSWORD = "1234"
 
@@ -43,7 +41,7 @@ def db_query(query, params=None):
 
 
 # =========================
-# CREATE TABLES
+# TABLES
 # =========================
 db_query("""
 CREATE TABLE IF NOT EXISTS workers (
@@ -79,25 +77,30 @@ SLOTS = [
 
 
 # =========================
-# SLOTS FUNCTION
+# SLOT LOGIC (FIXED)
 # =========================
 def get_available_slots(worker_id, date):
     if not date:
         return SLOTS
 
-    cur = db_query("""
-        SELECT date FROM bookings
-        WHERE worker_id=%s AND date::date = %s::date
-    """, (worker_id, date))
+    try:
+        cur = db_query("""
+            SELECT date FROM bookings
+            WHERE worker_id=%s AND date::date = %s::date
+        """, (worker_id, date))
 
-    if not cur:
+        rows = cur.fetchall() if cur else []
+
+        booked = []
+        for row in rows:
+            if row[0]:
+                booked.append(row[0].strftime("%H:%M"))
+
+        return [slot for slot in SLOTS if slot not in booked]
+
+    except Exception as e:
+        print("SLOTS ERROR:", e)
         return SLOTS
-
-    rows = cur.fetchall()
-
-    booked = [row[0].strftime("%H:%M") for row in rows if row[0]]
-
-    return [slot for slot in SLOTS if slot not in booked]
 
 
 # =========================
@@ -117,7 +120,7 @@ def home():
 
 
 # =========================
-# WORKER PAGE
+# WORKER PUBLIC PAGE
 # =========================
 @app.route("/<slug>", methods=["GET", "POST"])
 def worker_public(slug):
@@ -135,16 +138,17 @@ def worker_public(slug):
     worker_id = worker[0]
     name = worker[1]
 
-    date = request.values.get("date", "")
+    # ✅ FIX: date sempre segura
+    date = request.values.get("date") or ""
 
     # =========================
     # POST BOOKING
     # =========================
     if request.method == "POST":
 
-        nome = request.form["nome"]
-        servico = request.form["servico"]
-        time = request.form["time"]
+        nome = request.form.get("nome")
+        servico = request.form.get("servico")
+        time = request.form.get("time")
 
         if not date or not time:
             return jsonify({"success": False, "error": "Data inválida"})
@@ -155,32 +159,30 @@ def worker_public(slug):
             return jsonify({"success": False, "error": "Formato inválido"})
 
         cur = db_query(
-            "SELECT 1 FROM bookings WHERE worker_id=%s AND date=%s LIMIT 1",
+            "SELECT 1 FROM bookings WHERE worker_id=%s AND date=%s",
             (worker_id, data)
         )
 
         if cur and cur.fetchone():
-            return jsonify({"success": False, "error": "Horário já ocupado"})
+            return jsonify({"success": False, "error": "Horário ocupado"})
 
         db_query("""
             INSERT INTO bookings (worker_id, client_name, service, date)
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
 
-        return jsonify({
-            "success": True,
-            "slots": get_available_slots(worker_id, date)
-        })
+        return jsonify({"success": True})
+
 
     # =========================
     # GET
     # =========================
-    available_slots = get_available_slots(worker_id, date) if date else SLOTS
+    slots = get_available_slots(worker_id, date) if date else SLOTS
 
     return render_template(
         "worker.html",
         name=name,
-        slots=available_slots,
+        slots=slots,
         selected_date=date
     )
 
@@ -189,8 +191,9 @@ def worker_public(slug):
 # API SLOTS
 # =========================
 @app.route("/api/slots/<slug>")
-def get_slots_api(slug):
-    date = request.args.get("date")
+def api_slots(slug):
+
+    date = request.args.get("date") or ""
 
     cur = db_query("SELECT id FROM workers WHERE slug=%s", (slug,))
     worker = cur.fetchone() if cur else None
@@ -200,9 +203,9 @@ def get_slots_api(slug):
 
     worker_id = worker[0]
 
-    return jsonify({
-        "slots": get_available_slots(worker_id, date) if date else SLOTS
-    })
+    slots = get_available_slots(worker_id, date) if date else SLOTS
+
+    return jsonify({"slots": slots})
 
 
 # =========================
@@ -217,6 +220,7 @@ def create_worker():
             Password: <input name="password"><br>
             Nome: <input name="name"><br>
             Slug: <input name="slug"><br>
+            Token: <input name="token"><br>
             Profissão: <input name="profession"><br>
             <button type="submit">Criar</button>
         </form>
@@ -225,12 +229,17 @@ def create_worker():
     if request.form.get("password") != ADMIN_PASSWORD:
         return "Acesso negado"
 
-    db_query(
-        "INSERT INTO workers (name, slug, profession) VALUES (%s, %s, %s)",
-        (request.form["name"], request.form["slug"], request.form.get("profession", "Outros"))
-    )
+    db_query("""
+        INSERT INTO workers (name, slug, profession, token)
+        VALUES (%s, %s, %s, %s)
+    """, (
+        request.form["name"],
+        request.form["slug"],
+        request.form.get("profession", "Outros"),
+        request.form["token"]
+    ))
 
-    return f"Worker criado: /{request.form['slug']}"
+    return "Worker criado"
 
 
 # =========================
@@ -254,5 +263,4 @@ def deactivate_worker():
 # RUN
 # =========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)

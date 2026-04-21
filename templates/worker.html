@@ -6,52 +6,91 @@
 <title>{{ name }}</title>
 
 <style>
-body {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+*{
     margin:0;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(180deg,#0b0b10,#1a1a2e);
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
 }
 
-.card {
-    width:90%;
-    max-width:500px;
+body{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(circle at top,#0f172a,#020617);
+    color:white;
+}
+
+.card{
+    width:100%;
+    max-width:520px;
+    padding:28px;
+    border-radius:28px;
     background: rgba(255,255,255,0.06);
     backdrop-filter: blur(20px);
-    border-radius:28px;
-    padding:25px;
+    border:1px solid rgba(255,255,255,0.1);
     box-shadow:0 20px 60px rgba(0,0,0,0.5);
 }
 
-h1 {
+h1{
     font-size:24px;
-    margin-bottom:10px;
+    margin-bottom:6px;
 }
 
-input, select {
+.subtitle{
+    font-size:13px;
+    opacity:0.6;
+    margin-bottom:20px;
+}
+
+input, select{
     width:100%;
     padding:14px;
-    margin-top:10px;
-    border-radius:14px;
-    border:none;
-    background: rgba(255,255,255,0.08);
+    margin-bottom:10px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
     color:white;
     outline:none;
 }
 
-button {
+button{
     width:100%;
     padding:14px;
-    margin-top:15px;
     border:none;
-    border-radius:14px;
-    background: linear-gradient(135deg,#4f9cff,#7c5cff);
+    border-radius:16px;
+    background: linear-gradient(135deg,#4f9cff,#6c5ce7);
     color:white;
     font-weight:600;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover{
+    transform:scale(1.02);
+}
+
+.slots{
+    margin-top:15px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+}
+
+.slot{
+    padding:10px;
+    border-radius:12px;
+    background: rgba(255,255,255,0.06);
+    text-align:center;
+    cursor:pointer;
+    font-size:13px;
+}
+
+.slot:hover{
+    background: rgba(255,255,255,0.12);
 }
 </style>
 </head>
@@ -59,10 +98,12 @@ button {
 <body>
 
 <div class="card">
+
     <h1>{{ name }}</h1>
+    <div class="subtitle">Escolhe o teu horário</div>
 
     <form method="POST">
-        <input name="nome" placeholder="Teu nome" required>
+        <input name="nome" placeholder="O teu nome" required>
 
         <select name="servico">
             <option>Corte</option>
@@ -78,8 +119,15 @@ button {
             {% endfor %}
         </select>
 
-        <button type="submit">Marcar</button>
+        <button type="submit">Confirmar marcação</button>
     </form>
+
+    <div class="slots">
+        {% for slot in slots %}
+            <div class="slot">{{ slot }}</div>
+        {% endfor %}
+    </div>
+
 </div>
 
 </body>

@@ -194,8 +194,10 @@ def get_available_slots(worker_id, date):
 
     rows = cur.fetchall()
 
+    # extrai só as horas já marcadas
     booked = [row[0][11:16] for row in rows]
 
+    # remove slots ocupados
     return [slot for slot in SLOTS if slot not in booked]
 
 # =========================

@@ -107,7 +107,7 @@ def worker_public(slug):
         # 🚫 VERIFICAR SE JÁ EXISTE MARCAÇÃO
         cursor.execute("""
             SELECT * FROM bookings 
-            WHERE worker_id=? AND date=?
+            WHERE worker_id=%s AND date=%s
         """, (worker_id, data))
 
         existing = cursor.fetchone()
@@ -118,7 +118,7 @@ def worker_public(slug):
         # ✅ GUARDAR MARCAÇÃO
         cursor.execute("""
             INSERT INTO bookings (worker_id, client_name, service, date)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
         conn.commit()
 

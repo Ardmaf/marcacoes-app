@@ -23,9 +23,16 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 import psycopg2
 import os
 
-conn = psycopg2.connect(os.environ["DATABASE_URL"])
-cursor = conn.cursor()
+conn = psycopg2.connect(
+    host="aws-0-eu-west-1.pooler.supabase.com",
+    port=6543,
+    database="postgres",
+    user="postgres.ujfqfvneqigxaiukposa",
+    password=os.environ["DB_PASSWORD"],
+    sslmode="require"
+)
 
+cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS workers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

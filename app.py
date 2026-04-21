@@ -175,27 +175,57 @@ def worker_public(slug):
     available_slots = SLOTS
 
     return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="pt">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }}</title>
+
+    <style>
+    body{
+        font-family: Arial;
+        background: #0b0b10;
+        color:white;
+    }
+    .container{
+        max-width:500px;
+        margin:auto;
+        padding:20px;
+    }
+    </style>
+
+    </head>
+    <body>
+
+    <div class="container">
+
     <h2>{{ name }}</h2>
 
     <form method="POST">
-        <input name="nome" placeholder="Nome" required>
+        <input name="nome" placeholder="Nome" required><br><br>
 
         <select name="servico">
             <option>Corte</option>
             <option>Barba</option>
             <option>Corte + Barba</option>
-        </select>
+        </select><br><br>
 
-        <input type="date" name="date" required>
+        <input type="date" name="date" required><br><br>
 
         <select name="time">
             {% for slot in slots %}
                 <option value="{{ slot }}">{{ slot }}</option>
             {% endfor %}
-        </select>
+        </select><br><br>
 
         <button type="submit">Marcar</button>
     </form>
+
+    </div>
+
+    </body>
+    </html>
     """, name=name, slots=available_slots)
 
 

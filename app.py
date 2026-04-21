@@ -183,6 +183,10 @@ FORM = """
 @app.route("/")
 def home():
     return "Sistema de marcações online ativo por mais tempo 🚀"
+
+@app.route("/debug2")
+def debug2():
+    return "WORKER ROUTE ATUAL"
     
 @app.route("/<slug>", methods=["GET", "POST"])
 def worker_public(slug):

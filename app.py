@@ -6,7 +6,6 @@ import psycopg2
 import json
 import os
 
-print("🔥🔥🔥 APP ATUALIZADA 🔥🔥🔥")
 
 # =========================
 # SLOTS
@@ -43,7 +42,7 @@ conn = psycopg2.connect(
 
 cursor = conn.cursor()
 
-cursor.execute("""
+cursor = db_query("""
 CREATE TABLE IF NOT EXISTS workers (
     id SERIAL PRIMARY KEY,
     name TEXT,
@@ -54,7 +53,7 @@ CREATE TABLE IF NOT EXISTS workers (
 )
 """)
 
-cursor.execute("""
+cursor = db_query("""
 CREATE TABLE IF NOT EXISTS bookings (
     id SERIAL PRIMARY KEY,
     worker_id INTEGER,
@@ -66,6 +65,14 @@ CREATE TABLE IF NOT EXISTS bookings (
 
 conn.commit()
 
+def db_query(query, params=None):
+    try:
+        cursor = db_query(query, params or ())
+        return cursor
+    except Exception:
+        conn.rollback()
+        raise
+
 # =========================
 # ADMIN
 # =========================
@@ -75,7 +82,7 @@ ADMIN_PASSWORD = "1234"
 # FUNÇÃO: SLOTS DISPONÍVEIS
 # =========================
 def get_available_slots(worker_id, date):
-    cursor.execute("""
+    cursor = db_query("""
         SELECT date FROM bookings
         WHERE worker_id=%s AND date LIKE %s
     """, (worker_id, date + "%"))
@@ -118,8 +125,12 @@ from flask import render_template
 
 @app.route("/")
 def home():
-    cursor.execute("SELECT name, slug, profession FROM workers")
-    rows = cursor.fetchall()
+    try:
+        cursor = db_query("SELECT name, slug, profession FROM workers")
+        rows = cursor.fetchall()
+    except Exception as e:
+        conn.rollback()
+        return f"Erro na base de dados: {e}"
 
     workers = []
 
@@ -138,7 +149,7 @@ def home():
 @app.route("/<slug>", methods=["GET", "POST"])
 def worker_public(slug):
 
-    cursor.execute(
+    cursor = db_query(
         "SELECT id, name, token, active FROM workers WHERE slug=%s",
         (slug,)
     )
@@ -163,7 +174,7 @@ def worker_public(slug):
         data = f"{date} {time}"
 
         # verificar conflito
-        cursor.execute("""
+        cursor = db_query("""
             SELECT * FROM bookings
             WHERE worker_id=%s AND date=%s
         """, (worker_id, data))
@@ -172,7 +183,7 @@ def worker_public(slug):
             return "❌ Horário já ocupado"
 
         # guardar
-        cursor.execute("""
+        cursor = db_query("""
             INSERT INTO bookings (worker_id, client_name, service, date)
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
@@ -253,7 +264,7 @@ def create_worker():
     slug = request.form["slug"]
     profession = request.form.get("profession", "Outros")
 
-    cursor.execute(
+    cursor = db_query(
         "INSERT INTO workers (name, slug, profession) VALUES (%s, %s, %s)",
         (name, slug, profession)
     )
@@ -273,7 +284,7 @@ def deactivate_worker():
 
     slug = request.form["slug"]
 
-    cursor.execute("""
+    cursor = db_query("""
         UPDATE workers SET active=0 WHERE slug=%s
     """, (slug,))
 

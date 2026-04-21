@@ -6,110 +6,187 @@
 <title>Marcações</title>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-    *{
-        margin:0;
-        padding:0;
-        box-sizing:border-box;
-        font-family:'Inter',sans-serif;
-    }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
 
-    body{
-        height:100vh;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background: radial-gradient(circle at top,#1b1b2a,#0b0b10);
-        color:white;
-    }
+body{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(circle at top,#1b1b2a,#0b0b10);
+    color:white;
+    overflow:hidden;
+}
 
-    .glass{
-        width:100%;
-        max-width:520px;
-        padding:30px;
-        border-radius:28px;
-        background: rgba(255,255,255,0.06);
-        backdrop-filter: blur(20px);
-        border:1px solid rgba(255,255,255,0.1);
-        box-shadow:0 20px 60px rgba(0,0,0,0.5);
-        text-align:center;
-        position:relative;
-    }
+/* LIGHT ORB BACKGROUND (iOS FEEL) */
+body::before{
+    content:'';
+    position:absolute;
+    width:600px;
+    height:600px;
+    background: radial-gradient(circle, rgba(120,120,255,0.25), transparent 60%);
+    top:-200px;
+    left:-200px;
+    filter: blur(40px);
+}
 
-    h1{font-size:28px;margin-bottom:8px;}
-    p{opacity:0.6;margin-bottom:20px;font-size:14px;}
+.glass{
+    width:100%;
+    max-width:520px;
+    padding:32px;
+    border-radius:32px;
 
-    input{
-        width:100%;
-        padding:16px;
-        border-radius:18px;
-        border:1px solid rgba(255,255,255,0.1);
-        background: rgba(255,255,255,0.05);
-        color:white;
-        text-align:center;
-        outline:none;
-    }
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(25px);
 
-    button{
-        width:100%;
-        padding:16px;
-        margin-top:12px;
-        border:none;
-        border-radius:18px;
-        background: linear-gradient(135deg,#4f9cff,#6c5ce7);
-        color:white;
-        font-weight:600;
-        cursor:pointer;
-    }
+    border:1px solid rgba(255,255,255,0.12);
 
-    .dropdown{
-        position:absolute;
-        width:100%;
-        background: rgba(20,20,30,0.95);
-        border-radius:16px;
-        margin-top:10px;
-        max-height:300px;
-        overflow:auto;
-        text-align:left;
-        display:none;
-        border:1px solid rgba(255,255,255,0.1);
-        z-index:10;
-    }
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.1);
 
-    .group{
-        padding:10px;
-        font-size:12px;
-        opacity:0.6;
-        text-transform:uppercase;
-    }
+    text-align:center;
+    position:relative;
 
-    .item{
-        padding:10px;
-        cursor:pointer;
-    }
+    transform: translateY(10px);
+    animation: fadeUp .6s ease forwards;
+}
 
-    .item:hover{
-        background: rgba(255,255,255,0.08);
-    }
+@keyframes fadeUp{
+    to{transform: translateY(0);}
+}
+
+h1{
+    font-size:30px;
+    font-weight:600;
+}
+
+p{
+    opacity:0.6;
+    margin-bottom:20px;
+    font-size:14px;
+}
+
+input{
+    width:100%;
+    padding:16px;
+    border-radius:20px;
+
+    border:1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+
+    color:white;
+    text-align:center;
+    outline:none;
+
+    transition: 0.2s;
+}
+
+input:focus{
+    border-color: rgba(120,120,255,0.6);
+    box-shadow: 0 0 0 4px rgba(120,120,255,0.15);
+}
+
+button{
+    width:100%;
+    padding:16px;
+    margin-top:12px;
+
+    border:none;
+    border-radius:20px;
+
+    background: linear-gradient(135deg,#4f9cff,#6c5ce7);
+    color:white;
+    font-weight:600;
+
+    cursor:pointer;
+    transition: 0.2s;
+}
+
+button:hover{
+    transform: scale(1.02);
+}
+
+/* DROPDOWN */
+.dropdown{
+    position:absolute;
+    width:100%;
+    margin-top:10px;
+
+    background: rgba(20,20,30,0.85);
+    backdrop-filter: blur(20px);
+
+    border-radius:18px;
+    max-height:280px;
+    overflow:auto;
+
+    text-align:left;
+    display:none;
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    animation: fadeIn .2s ease;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform: translateY(-5px);}
+    to{opacity:1; transform: translateY(0);}
+}
+
+.group{
+    padding:10px 14px;
+    font-size:11px;
+    opacity:0.5;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.item{
+    padding:12px 14px;
+    cursor:pointer;
+    transition: 0.2s;
+    border-radius:12px;
+    margin:4px;
+}
+
+.item:hover{
+    background: rgba(255,255,255,0.08);
+    transform: translateX(4px);
+}
+
+.item.active{
+    background: rgba(120,120,255,0.2);
+}
 
 </style>
 </head>
+
 <body>
 
 <div class="glass">
     <h1>Marcações</h1>
     <p>Procura o teu profissional</p>
 
-    <input id="search" placeholder="Escreve o nome do trabalhador..." oninput="filterWorkers()" autocomplete="off">
+    <input id="search"
+           placeholder="Escreve o nome do trabalhador..."
+           oninput="filterWorkers()"
+           autocomplete="off">
+
     <div class="dropdown" id="dropdown"></div>
-    <button onclick="go()">Abrir</button>
+
+    <button onclick="go()">Abrir perfil</button>
 </div>
 
 <script>
-// workers vindos do backend (slug + nome + profissão)
-const workers = {{ workers|tojson }};
 
+const workers = {{ workers|tojson }};
 let selected = null;
 
 function groupWorkers(list){
@@ -120,9 +197,9 @@ function groupWorkers(list){
         grouped[w.profession].push(w);
     });
 
-    Object.keys(grouped).forEach(k => {
+    for(const k in grouped){
         grouped[k].sort((a,b)=>a.name.localeCompare(b.name));
-    });
+    }
 
     return grouped;
 }
@@ -137,24 +214,31 @@ function filterWorkers(){
         return;
     }
 
-    const filtered = workers.filter(w => w.name.toLowerCase().includes(q));
+    const filtered = workers.filter(w =>
+        w.name.toLowerCase().includes(q)
+    );
+
     const grouped = groupWorkers(filtered);
 
     for(const prof in grouped){
+
         const g = document.createElement('div');
         g.className='group';
         g.innerText=prof;
         dropdown.appendChild(g);
 
         grouped[prof].forEach(w => {
+
             const item = document.createElement('div');
             item.className='item';
             item.innerText = w.name;
+
             item.onclick = () => {
-                document.getElementById('search').value = w.slug;
+                document.getElementById('search').value = w.name;
                 selected = w.slug;
                 dropdown.style.display='none';
             };
+
             dropdown.appendChild(item);
         });
     }
@@ -164,8 +248,11 @@ function filterWorkers(){
 
 function go(){
     const val = document.getElementById('search').value.trim();
-    if(val){
-        window.location.href = '/' + val;
+
+    const found = workers.find(w => w.name === val);
+
+    if(found){
+        window.location.href = '/' + found.slug;
     }
 }
 

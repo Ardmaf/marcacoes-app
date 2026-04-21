@@ -173,7 +173,7 @@ def worker_public(slug):
     # GET SLOTS
     # =========================
     if request.method == "POST":
-        available_slots = get_available_slots(worker_id, date) if date else SLOTS
+        available_slots = get_available_slots(worker_id, date)
 
     return render_template(
         "worker.html",
@@ -182,6 +182,9 @@ def worker_public(slug):
     )
 
 def get_available_slots(worker_id, date):
+    if not date:
+        return SLOTS
+
     cur = db_query("""
         SELECT date FROM bookings
         WHERE worker_id=%s AND date LIKE %s
@@ -192,10 +195,8 @@ def get_available_slots(worker_id, date):
 
     rows = cur.fetchall()
 
-    # extrai só as horas já marcadas
     booked = [row[0][11:16] for row in rows]
 
-    # remove slots ocupados
     return [slot for slot in SLOTS if slot not in booked]
 
 # =========================

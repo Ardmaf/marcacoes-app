@@ -23,7 +23,7 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 import psycopg2
 import os
 
-conn = psycopg2.connect(os.environ["postgresql://postgres:[YOUR-PASSWORD]@db.ujfqfvneqigxaiukposa.supabase.co:5432/postgres"])
+conn = psycopg2.connect(os.environ["DATABASE_URL"])
 cursor = conn.cursor()
 
 cursor.execute("""

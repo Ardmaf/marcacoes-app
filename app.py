@@ -71,34 +71,109 @@ ADMIN_PASSWORD = "1234"
 # FORM CLIENTE
 # =========================
 FORM = """
-<h2>Marcação - {{name}}</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcações</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f0f0f;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
 
-<form method="POST">
-    Nome:<br>
-    <input name="nome" required><br><br>
+        .container {
+            max-width: 420px;
+            margin: auto;
+            background: #1c1c1c;
+            padding: 20px;
+            border-radius: 12px;
+        }
 
-    Serviço:<br>
-    <select name="servico">
-        <option>Corte</option>
-        <option>Barba</option>
-        <option>Corte + Barba</option>
-    </select><br><br>
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-    Data:<br>
-    <input type="date" name="date" required><br><br>
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
 
-    Hora:<br>
-    <select name="time">
-        {% for slot in slots %}
-            <option value="{{ slot }}">{{ slot }}</option>
-        {% endfor %}
-    </select><br><br>
+        input, select {
+            background: #2a2a2a;
+            color: white;
+        }
 
-    <button type="submit">Marcar</button>
-</form>
+        button {
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
 
-<br>
-<a href="/login/{{slug}}">Login Google (Worker)</a>
+        button:hover {
+            background: #45a049;
+        }
+
+        .slots {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .slot {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .slot:hover {
+            background: #3a3a3a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>{{ name }}</h2>
+
+    <form method="POST">
+
+        <input name="nome" placeholder="O teu nome" required>
+
+        <select name="servico">
+            <option>Corte</option>
+            <option>Barba</option>
+            <option>Corte + Barba</option>
+        </select>
+
+        <input type="date" name="date" required>
+
+        <select name="time">
+            {% for slot in slots %}
+                <option value="{{ slot }}">{{ slot }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Marcar Agora</button>
+
+    </form>
+</div>
+
+</body>
+</html>
 """
 
 # =========================

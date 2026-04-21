@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ name }}</title>
+
+<style>
+body {
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg,#0b0b10,#1a1a2e);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.card {
+    width:90%;
+    max-width:500px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border-radius:28px;
+    padding:25px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+
+h1 {
+    font-size:24px;
+    margin-bottom:10px;
+}
+
+input, select {
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border-radius:14px;
+    border:none;
+    background: rgba(255,255,255,0.08);
+    color:white;
+    outline:none;
+}
+
+button {
+    width:100%;
+    padding:14px;
+    margin-top:15px;
+    border:none;
+    border-radius:14px;
+    background: linear-gradient(135deg,#4f9cff,#7c5cff);
+    color:white;
+    font-weight:600;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>{{ name }}</h1>
+
+    <form method="POST">
+        <input name="nome" placeholder="Teu nome" required>
+
+        <select name="servico">
+            <option>Corte</option>
+            <option>Barba</option>
+            <option>Corte + Barba</option>
+        </select>
+
+        <input type="date" name="date" required>
+
+        <select name="time">
+            {% for slot in slots %}
+                <option value="{{ slot }}">{{ slot }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Marcar</button>
+    </form>
+</div>
+
+</body>
+</html>

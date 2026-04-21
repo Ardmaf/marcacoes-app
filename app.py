@@ -20,7 +20,10 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 # =========================
 # BASE DE DADOS
 # =========================
-conn = sqlite3.connect("database.db", check_same_thread=False)
+import psycopg2
+import os
+
+conn = psycopg2.connect(os.environ["postgresql://postgres:[YOUR-PASSWORD]@db.ujfqfvneqigxaiukposa.supabase.co:5432/postgres"])
 cursor = conn.cursor()
 
 cursor.execute("""

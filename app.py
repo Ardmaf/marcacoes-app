@@ -1,21 +1,15 @@
-from flask import Flask, request, render_template, render_template_string, jsonify
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
+from flask import Flask, request, render_template, jsonify
 import psycopg2
-import json
 import os
+from datetime import datetime
 
 # =========================
 # APP
 # =========================
 app = Flask(__name__)
-app.secret_key = "supersecret"
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
-CLIENT_SECRETS_FILE = "client_secret.json"
-SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 ADMIN_PASSWORD = "1234"
 
@@ -35,7 +29,7 @@ conn.autocommit = True
 
 
 # =========================
-# DB FUNCTION (CORRIGIDA E SEGURA)
+# DB FUNCTION
 # =========================
 def db_query(query, params=None):
     try:
@@ -85,12 +79,33 @@ SLOTS = [
 
 
 # =========================
+# SLOTS FUNCTION
+# =========================
+def get_available_slots(worker_id, date):
+    if not date:
+        return SLOTS
+
+    cur = db_query("""
+        SELECT date FROM bookings
+        WHERE worker_id=%s AND date::date = %s::date
+    """, (worker_id, date))
+
+    if not cur:
+        return SLOTS
+
+    rows = cur.fetchall()
+
+    booked = [row[0].strftime("%H:%M") for row in rows if row[0]]
+
+    return [slot for slot in SLOTS if slot not in booked]
+
+
+# =========================
 # HOME
 # =========================
 @app.route("/")
 def home():
     cur = db_query("SELECT name, slug, profession FROM workers")
-
     rows = cur.fetchall() if cur else []
 
     workers = [
@@ -119,10 +134,8 @@ def worker_public(slug):
 
     worker_id = worker[0]
     name = worker[1]
-    token = worker[2]
 
-    # data selecionada (GET ou POST)
-    date = request.form.get("date") if request.method == "POST" else request.args.get("date", "")
+    date = request.values.get("date", "")
 
     # =========================
     # POST BOOKING
@@ -133,10 +146,16 @@ def worker_public(slug):
         servico = request.form["servico"]
         time = request.form["time"]
 
-        data = f"{date} {time}"
+        if not date or not time:
+            return jsonify({"success": False, "error": "Data inválida"})
+
+        try:
+            data = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        except:
+            return jsonify({"success": False, "error": "Formato inválido"})
 
         cur = db_query(
-            "SELECT * FROM bookings WHERE worker_id=%s AND date=%s",
+            "SELECT 1 FROM bookings WHERE worker_id=%s AND date=%s LIMIT 1",
             (worker_id, data)
         )
 
@@ -148,10 +167,13 @@ def worker_public(slug):
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
 
-        return jsonify({"success": True})
+        return jsonify({
+            "success": True,
+            "slots": get_available_slots(worker_id, date)
+        })
 
     # =========================
-    # GET → slots sempre calculados aqui
+    # GET
     # =========================
     available_slots = get_available_slots(worker_id, date) if date else SLOTS
 
@@ -161,33 +183,16 @@ def worker_public(slug):
         slots=available_slots,
         selected_date=date
     )
-def get_available_slots(worker_id, date):
-    if not date:
-        return SLOTS
 
-    cur = db_query("""
-        SELECT date FROM bookings
-        WHERE worker_id=%s AND date LIKE %s
-    """, (worker_id, date + "%"))
 
-    if not cur:
-        return SLOTS
-
-    rows = cur.fetchall()
-
-    booked = [row[0][11:16] for row in rows if row[0]]
-
-    return [slot for slot in SLOTS if slot not in booked]
-
+# =========================
+# API SLOTS
+# =========================
 @app.route("/api/slots/<slug>")
 def get_slots_api(slug):
     date = request.args.get("date")
 
-    cur = db_query(
-        "SELECT id FROM workers WHERE slug=%s",
-        (slug,)
-    )
-
+    cur = db_query("SELECT id FROM workers WHERE slug=%s", (slug,))
     worker = cur.fetchone() if cur else None
 
     if not worker:
@@ -195,9 +200,11 @@ def get_slots_api(slug):
 
     worker_id = worker[0]
 
-    slots = get_available_slots(worker_id, date) if date else SLOTS
+    return jsonify({
+        "slots": get_available_slots(worker_id, date) if date else SLOTS
+    })
 
-    return jsonify({"slots": slots})
+
 # =========================
 # ADMIN CREATE WORKER
 # =========================
@@ -248,4 +255,4 @@ def deactivate_worker():
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)

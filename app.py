@@ -35,7 +35,7 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS workers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT,
     slug TEXT UNIQUE,
     token TEXT,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS workers (
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS bookings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     worker_id INTEGER,
     client_name TEXT,
     service TEXT,

@@ -3,113 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marcações Online</title>
+<title>Marcações</title>
+
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
     *{
         margin:0;
         padding:0;
         box-sizing:border-box;
-        font-family: Arial, sans-serif;
+        font-family: 'Inter', sans-serif;
     }
 
     body{
-        background: linear-gradient(135deg,#0f0f0f,#1c1c1c);
-        color:white;
-        min-height:100vh;
+        height:100vh;
         display:flex;
-        flex-direction:column;
         align-items:center;
         justify-content:center;
-        padding:20px;
+        background: radial-gradient(circle at top, #1b1b2a, #0b0b10);
+        color:white;
+        overflow:hidden;
     }
 
-    .card{
-        background:#1e1e1e;
-        padding:30px;
-        border-radius:16px;
+    .glass{
         width:100%;
-        max-width:500px;
-        box-shadow:0 10px 30px rgba(0,0,0,0.5);
+        max-width:520px;
+        padding:30px;
+        border-radius:28px;
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         text-align:center;
     }
 
     h1{
         font-size:28px;
-        margin-bottom:10px;
+        font-weight:600;
+        margin-bottom:8px;
+        letter-spacing:-0.5px;
     }
 
     p{
-        opacity:0.7;
-        margin-bottom:20px;
+        opacity:0.6;
+        margin-bottom:25px;
+        font-size:14px;
+    }
+
+    .search-box{
+        display:flex;
+        flex-direction:column;
+        gap:12px;
     }
 
     input{
-        width:100%;
-        padding:12px;
-        margin-top:10px;
-        border:none;
-        border-radius:10px;
-        background:#2a2a2a;
+        padding:16px;
+        border-radius:18px;
+        border:1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
         color:white;
+        font-size:15px;
         outline:none;
-    }
-
-    button{
-        width:100%;
-        padding:12px;
-        margin-top:15px;
-        border:none;
-        border-radius:10px;
-        background:#4CAF50;
-        color:white;
-        font-weight:bold;
-        cursor:pointer;
+        text-align:center;
         transition:0.3s;
     }
 
+    input:focus{
+        border-color: rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.08);
+    }
+
+    button{
+        padding:16px;
+        border:none;
+        border-radius:18px;
+        background: linear-gradient(135deg,#4f9cff,#6c5ce7);
+        color:white;
+        font-weight:600;
+        cursor:pointer;
+        transition:0.3s;
+        box-shadow: 0 10px 30px rgba(108,92,231,0.3);
+    }
+
     button:hover{
-        background:#45a049;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(108,92,231,0.4);
     }
 
-    .workers{
-        margin-top:20px;
-        text-align:left;
-    }
-
-    .worker{
-        background:#2a2a2a;
-        padding:10px;
-        border-radius:10px;
-        margin-top:8px;
-    }
-
-    .footer{
-        margin-top:20px;
+    .hint{
+        margin-top:18px;
         font-size:12px;
         opacity:0.5;
     }
+
+    .bubble{
+        position:absolute;
+        width:300px;
+        height:300px;
+        background: rgba(108,92,231,0.15);
+        filter: blur(60px);
+        border-radius:50%;
+        top:-80px;
+        left:-80px;
+    }
+
+    .bubble2{
+        position:absolute;
+        width:250px;
+        height:250px;
+        background: rgba(79,156,255,0.15);
+        filter: blur(60px);
+        border-radius:50%;
+        bottom:-80px;
+        right:-80px;
+    }
+
 </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>🔥 Marcações Online</h1>
-    <p>Escolhe o teu profissional e marca o teu horário</p>
+<div class="bubble"></div>
+<div class="bubble2"></div>
 
-    <input type="text" placeholder="Procura trabalhador (slug)...">
-    <button>Entrar</button>
+<div class="glass">
+    <h1>Marcações</h1>
+    <p>Procura o teu profissional e marca em segundos</p>
 
-    <div class="workers">
-        <h3>Exemplo de acessos:</h3>
-        <div class="worker">/barbearia</div>
-        <div class="worker">/joao</div>
-        <div class="worker">/maria</div>
+    <div class="search-box">
+        <input id="slugInput" type="text" placeholder="Escreve o nome do trabalhador...">
+        <button onclick="goToWorker()">Pesquisar</button>
     </div>
 
-    <div class="footer">
-        Sistema de agendamento profissional 🚀
+    <div class="hint">
+        Ex: joao • maria • barbearia
     </div>
 </div>
+
+<script>
+function goToWorker(){
+    const slug = document.getElementById('slugInput').value.trim();
+    if(slug){
+        window.location.href = '/' + slug;
+    }
+}
+</script>
 
 </body>
 </html>

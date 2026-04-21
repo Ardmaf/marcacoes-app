@@ -97,6 +97,8 @@ input, select {
     background: linear-gradient(135deg,#4f9cff,#6c5ce7);
 }
 
+<div id="msg" style="margin-top:10px;"></div>
+    
 /* BUTTON */
 button {
     width: 100%;
@@ -144,7 +146,7 @@ button:active {
             <option>Corte + Barba</option>
         </select>
 
-        <input type="date" name="date" required onchange="this.form.submit()">
+        <input type="date" name="date" value="{{ selected_date }}" required>
 
         <!-- SLOTS -->
         <div class="slot-grid" id="slots">
@@ -175,14 +177,40 @@ function selectSlot(el, value){
     document.getElementById('time').value = value;
 }
 
-document.getElementById("form").addEventListener("submit", function(e){
+document.getElementById("form").addEventListener("submit", async function(e){
+    e.preventDefault();
+
     if(!selected){
-        e.preventDefault();
         alert("Escolhe um horário primeiro");
         return;
     }
 
+    const form = e.target;
+    const data = new FormData(form);
+
     document.getElementById("loading").style.display = "block";
+
+    const res = await fetch(window.location.pathname, {
+        method: "POST",
+        body: data
+    });
+
+    const result = await res.json();
+
+    const msg = document.getElementById("msg");
+
+    document.getElementById("loading").style.display = "none";
+
+    if(result.success){
+        msg.innerHTML = "✅ Marcação feita com sucesso!";
+        msg.style.color = "#4ade80";
+
+        setTimeout(() => location.reload(), 1200);
+
+    } else {
+        msg.innerHTML = "❌ " + result.error;
+        msg.style.color = "#ff6b6b";
+    }
 });
 </script>
 

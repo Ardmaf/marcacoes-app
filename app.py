@@ -1,21 +1,10 @@
-from flask import Flask, request, render_template_string, redirect, session
+from flask import Flask, request, render_template, render_template_string
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import psycopg2
 import json
 import os
-
-
-# =========================
-# SLOTS
-# =========================
-SLOTS = [
-    "09:00", "09:30", "10:00", "10:30",
-    "11:00", "11:30", "12:00", "12:30",
-    "14:00", "14:30", "15:00", "15:30",
-    "16:00", "16:30", "17:00"
-]
 
 # =========================
 # APP
@@ -28,8 +17,10 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 CLIENT_SECRETS_FILE = "client_secret.json"
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
+ADMIN_PASSWORD = "1234"
+
 # =========================
-# DATABASE (POSTGRES)
+# DATABASE CONNECTION
 # =========================
 conn = psycopg2.connect(
     host="aws-0-eu-west-1.pooler.supabase.com",
@@ -40,9 +31,27 @@ conn = psycopg2.connect(
     sslmode="require"
 )
 
-cursor = conn.cursor()
+conn.autocommit = True
 
-cursor = db_query("""
+
+# =========================
+# DB FUNCTION (CORRIGIDA E SEGURA)
+# =========================
+def db_query(query, params=None):
+    try:
+        cur = conn.cursor()
+        cur.execute(query, params or ())
+        return cur
+    except Exception as e:
+        conn.rollback()
+        print("DB ERROR:", e)
+        return None
+
+
+# =========================
+# CREATE TABLES
+# =========================
+db_query("""
 CREATE TABLE IF NOT EXISTS workers (
     id SERIAL PRIMARY KEY,
     name TEXT,
@@ -53,7 +62,7 @@ CREATE TABLE IF NOT EXISTS workers (
 )
 """)
 
-cursor = db_query("""
+db_query("""
 CREATE TABLE IF NOT EXISTS bookings (
     id SERIAL PRIMARY KEY,
     worker_id INTEGER,
@@ -63,97 +72,47 @@ CREATE TABLE IF NOT EXISTS bookings (
 )
 """)
 
-conn.commit()
-
-def db_query(query, params=None):
-    try:
-        cursor = db_query(query, params or ())
-        return cursor
-    except Exception:
-        conn.rollback()
-        raise
 
 # =========================
-# ADMIN
+# SLOTS
 # =========================
-ADMIN_PASSWORD = "1234"
+SLOTS = [
+    "09:00", "09:30", "10:00", "10:30",
+    "11:00", "11:30", "12:00", "12:30",
+    "14:00", "14:30", "15:00", "15:30",
+    "16:00", "16:30", "17:00"
+]
 
-# =========================
-# FUNÇÃO: SLOTS DISPONÍVEIS
-# =========================
-def get_available_slots(worker_id, date):
-    cursor = db_query("""
-        SELECT date FROM bookings
-        WHERE worker_id=%s AND date LIKE %s
-    """, (worker_id, date + "%"))
-
-    booked = [row[0][11:16] for row in cursor.fetchall()]
-
-    return [slot for slot in SLOTS if slot not in booked]
-
-# =========================
-# FORM
-# =========================
-FORM = """
-<h2>{{ name }}</h2>
-
-<form method="POST">
-    <input name="nome" placeholder="Nome" required>
-
-    <select name="servico">
-        <option>Corte</option>
-        <option>Barba</option>
-        <option>Corte + Barba</option>
-    </select>
-
-    <input type="date" name="date" required>
-
-    <select name="time">
-        {% for slot in slots %}
-            <option value="{{ slot }}">{{ slot }}</option>
-        {% endfor %}
-    </select>
-
-    <button type="submit">Marcar</button>
-</form>
-"""
 
 # =========================
 # HOME
 # =========================
-from flask import render_template
-
 @app.route("/")
 def home():
-    try:
-        cursor = db_query("SELECT name, slug, profession FROM workers")
-        rows = cursor.fetchall()
-    except Exception as e:
-        conn.rollback()
-        return f"Erro na base de dados: {e}"
+    cur = db_query("SELECT name, slug, profession FROM workers")
 
-    workers = []
+    rows = cur.fetchall() if cur else []
 
-    for w in rows:
-        workers.append({
-            "name": w[0],
-            "slug": w[1],
-            "profession": w[2] if w[2] else "Outros"
-        })
+    workers = [
+        {"name": w[0], "slug": w[1], "profession": w[2] or "Outros"}
+        for w in rows
+    ]
 
     return render_template("home.html", workers=workers)
 
+
 # =========================
-# WORKER PAGE (CLIENTE)
+# WORKER PAGE
 # =========================
 @app.route("/<slug>", methods=["GET", "POST"])
 def worker_public(slug):
 
-    cursor = db_query(
+    cur = db_query(
         "SELECT id, name, token, active FROM workers WHERE slug=%s",
         (slug,)
     )
-    worker = cursor.fetchone()
+
+    worker = cur.fetchone() if cur else None
 
     if not worker or worker[3] == 0:
         return "Trabalhador não encontrado"
@@ -162,10 +121,13 @@ def worker_public(slug):
     name = worker[1]
     token = worker[2]
 
+    date = request.args.get("date", "")
+
     # =========================
-    # POST (CRIAR MARCAÇÃO)
+    # POST BOOKING
     # =========================
     if request.method == "POST":
+
         nome = request.form["nome"]
         servico = request.form["servico"]
         date = request.form["date"]
@@ -173,22 +135,18 @@ def worker_public(slug):
 
         data = f"{date} {time}"
 
-        # verificar conflito
-        cursor = db_query("""
-            SELECT * FROM bookings
-            WHERE worker_id=%s AND date=%s
-        """, (worker_id, data))
+        cur = db_query(
+            "SELECT * FROM bookings WHERE worker_id=%s AND date=%s",
+            (worker_id, data)
+        )
 
-        if cursor.fetchone():
+        if cur and cur.fetchone():
             return "❌ Horário já ocupado"
 
-        # guardar
-        cursor = db_query("""
+        db_query("""
             INSERT INTO bookings (worker_id, client_name, service, date)
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
-
-        conn.commit()
 
         # GOOGLE CALENDAR
         if token:
@@ -212,17 +170,34 @@ def worker_public(slug):
         return "✅ Marcação feita com sucesso!"
 
     # =========================
-    # GET (MOSTRAR SLOTS)
+    # GET SLOTS
     # =========================
-    date = request.form.get("date")
-
     available_slots = SLOTS
 
-    return render_template_string(
-        FORM,
-        name=name,
-        slots=available_slots
-    )
+    return render_template_string("""
+    <h2>{{ name }}</h2>
+
+    <form method="POST">
+        <input name="nome" placeholder="Nome" required>
+
+        <select name="servico">
+            <option>Corte</option>
+            <option>Barba</option>
+            <option>Corte + Barba</option>
+        </select>
+
+        <input type="date" name="date" required>
+
+        <select name="time">
+            {% for slot in slots %}
+                <option value="{{ slot }}">{{ slot }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Marcar</button>
+    </form>
+    """, name=name, slots=available_slots)
+
 
 # =========================
 # ADMIN CREATE WORKER
@@ -230,48 +205,27 @@ def worker_public(slug):
 @app.route("/admin/create_worker", methods=["GET", "POST"])
 def create_worker():
 
-    # =========================
-    # GET → mostra formulário
-    # =========================
     if request.method == "GET":
         return """
-        <h2>Criar Worker</h2>
-
         <form method="POST">
-            Password:<br>
-            <input name="password" type="password"><br><br>
-
-            Nome:<br>
-            <input name="name" required><br><br>
-
-            Slug (URL):<br>
-            <input name="slug" required><br><br>
-
-            Profissão:<br>
-            <input name="profession" placeholder="Barbeiro, Nails, Estética..."><br><br>
-
-            <button type="submit">Criar Worker</button>
+            Password: <input name="password"><br>
+            Nome: <input name="name"><br>
+            Slug: <input name="slug"><br>
+            Profissão: <input name="profession"><br>
+            <button type="submit">Criar</button>
         </form>
         """
 
-    # =========================
-    # POST → cria worker
-    # =========================
     if request.form.get("password") != ADMIN_PASSWORD:
         return "Acesso negado"
 
-    name = request.form["name"]
-    slug = request.form["slug"]
-    profession = request.form.get("profession", "Outros")
-
-    cursor = db_query(
+    db_query(
         "INSERT INTO workers (name, slug, profession) VALUES (%s, %s, %s)",
-        (name, slug, profession)
+        (request.form["name"], request.form["slug"], request.form.get("profession", "Outros"))
     )
 
-    conn.commit()
+    return f"Worker criado: /{request.form['slug']}"
 
-    return f"Worker criado com sucesso: /{slug}"
 
 # =========================
 # ADMIN DEACTIVATE
@@ -282,15 +236,13 @@ def deactivate_worker():
     if request.form.get("password") != ADMIN_PASSWORD:
         return "Acesso negado"
 
-    slug = request.form["slug"]
-
-    cursor = db_query("""
-        UPDATE workers SET active=0 WHERE slug=%s
-    """, (slug,))
-
-    conn.commit()
+    db_query(
+        "UPDATE workers SET active=0 WHERE slug=%s",
+        (request.form["slug"],)
+    )
 
     return "Worker desativado"
+
 
 # =========================
 # RUN

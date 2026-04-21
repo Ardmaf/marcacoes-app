@@ -121,7 +121,8 @@ def worker_public(slug):
     name = worker[1]
     token = worker[2]
 
-    date = request.args.get("date", "")
+    # data selecionada (GET ou POST)
+    date = request.form.get("date") if request.method == "POST" else request.args.get("date", "")
 
     # =========================
     # POST BOOKING
@@ -130,7 +131,6 @@ def worker_public(slug):
 
         nome = request.form["nome"]
         servico = request.form["servico"]
-        date = request.form["date"]
         time = request.form["time"]
 
         data = f"{date} {time}"
@@ -148,39 +148,19 @@ def worker_public(slug):
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
 
-        # GOOGLE CALENDAR
-        if token:
-            creds = Credentials.from_authorized_user_info(json.loads(token), SCOPES)
-            service = build("calendar", "v3", credentials=creds)
-
-            event = {
-                "summary": f"{servico} - {nome}",
-                "start": {
-                    "dateTime": data + ":00",
-                    "timeZone": "Europe/Lisbon"
-                },
-                "end": {
-                    "dateTime": f"{date} {time}:30",
-                    "timeZone": "Europe/Lisbon"
-                }
-            }
-
-            service.events().insert(calendarId="primary", body=event).execute()
-    
         return "✅ Marcação feita com sucesso!"
 
     # =========================
-    # GET SLOTS
+    # GET → slots sempre calculados aqui
     # =========================
-    if request.method == "POST":
-        available_slots = get_available_slots(worker_id, date)
+    available_slots = get_available_slots(worker_id, date) if date else SLOTS
 
     return render_template(
         "worker.html",
         name=name,
-        slots=available_slots
+        slots=available_slots,
+        selected_date=date
     )
-
 def get_available_slots(worker_id, date):
     if not date:
         return SLOTS
@@ -195,10 +175,9 @@ def get_available_slots(worker_id, date):
 
     rows = cur.fetchall()
 
-    booked = [row[0][11:16] for row in rows]
+    booked = [row[0][11:16] for row in rows if row[0]]
 
     return [slot for slot in SLOTS if slot not in booked]
-
 # =========================
 # ADMIN CREATE WORKER
 # =========================

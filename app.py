@@ -115,7 +115,7 @@ FORM = """
 # =========================
 @app.route("/")
 def home():
-    return "Sistema de marcações online 🚀"
+    return render_template_string(open("homepage.html").read())
 
 # =========================
 # WORKER PAGE (CLIENTE)

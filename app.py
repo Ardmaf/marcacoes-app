@@ -6,6 +6,13 @@ from google.oauth2.credentials import Credentials
 import json
 import os
 
+SLOTS = [
+    "09:00", "09:30", "10:00", "10:30",
+    "11:00", "11:30", "12:00", "12:30",
+    "14:00", "14:30", "15:00", "15:30",
+    "16:00", "16:30", "17:00"
+]
+
 app = Flask(__name__)
 app.secret_key = "supersecret"
 
@@ -77,8 +84,15 @@ FORM = """
         <option>Corte + Barba</option>
     </select><br><br>
 
-    Data e Hora:<br>
-    <input type="datetime-local" name="data" required><br><br>
+    Data:<br>
+    <input type="date" name="date" required><br><br>
+
+    Hora:<br>
+    <select name="time">
+        {% for slot in slots %}
+            <option value="{{ slot }}">{{ slot }}</option>
+        {% endfor %}
+    </select><br><br>
 
     <button type="submit">Marcar</button>
 </form>
@@ -109,7 +123,9 @@ def worker_public(slug):
     if request.method == "POST":
         nome = request.form["nome"]
         servico = request.form["servico"]
-        data = request.form["data"]
+        date = request.form["date"]
+        time = request.form["time"]
+        data = f"{date} {time}"
 
         # 🚫 VERIFICAR SE JÁ EXISTE MARCAÇÃO
         cursor.execute("""
@@ -155,7 +171,16 @@ def worker_public(slug):
 
         return "✅ Marcação feita com sucesso!"
 
-    return render_template_string(FORM, name=name, slug=slug)
+    date = request.args.get("date", "")
+
+    available_slots = get_available_slots(worker_id, date) if date else SLOTS
+
+    return render_template_string(
+        FORM,
+        name=name,
+        slug=slug,
+        slots=available_slots
+    )
 
 # =========================
 # LOGIN WORKER (GOOGLE)

@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS workers (
     id SERIAL PRIMARY KEY,
     name TEXT,
     slug TEXT UNIQUE,
+    profession TEXT,
     token TEXT,
     active INTEGER DEFAULT 1
 )
@@ -117,7 +118,19 @@ from flask import render_template
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    cursor.execute("SELECT name, slug, profession FROM workers")
+    rows = cursor.fetchall()
+
+    workers = []
+
+    for w in rows:
+        workers.append({
+            "name": w[0],
+            "slug": w[1],
+            "profession": w[2] if w[2] else "Outros"
+        })
+
+    return render_template("home.html", workers=workers)
 
 # =========================
 # WORKER PAGE (CLIENTE)
@@ -203,23 +216,51 @@ def worker_public(slug):
 # =========================
 # ADMIN CREATE WORKER
 # =========================
-@app.route("/admin/create_worker", methods=["POST"])
+@app.route("/admin/create_worker", methods=["GET", "POST"])
 def create_worker():
 
+    # =========================
+    # GET → mostra formulário
+    # =========================
+    if request.method == "GET":
+        return """
+        <h2>Criar Worker</h2>
+
+        <form method="POST">
+            Password:<br>
+            <input name="password" type="password"><br><br>
+
+            Nome:<br>
+            <input name="name" required><br><br>
+
+            Slug (URL):<br>
+            <input name="slug" required><br><br>
+
+            Profissão:<br>
+            <input name="profession" placeholder="Barbeiro, Nails, Estética..."><br><br>
+
+            <button type="submit">Criar Worker</button>
+        </form>
+        """
+
+    # =========================
+    # POST → cria worker
+    # =========================
     if request.form.get("password") != ADMIN_PASSWORD:
         return "Acesso negado"
 
     name = request.form["name"]
     slug = request.form["slug"]
+    profession = request.form.get("profession", "Outros")
 
-    cursor.execute("""
-        INSERT INTO workers (name, slug)
-        VALUES (%s, %s)
-    """, (name, slug))
+    cursor.execute(
+        "INSERT INTO workers (name, slug, profession) VALUES (%s, %s, %s)",
+        (name, slug, profession)
+    )
 
     conn.commit()
 
-    return f"Worker criado: /{slug}"
+    return f"Worker criado com sucesso: /{slug}"
 
 # =========================
 # ADMIN DEACTIVATE

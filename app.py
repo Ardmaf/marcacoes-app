@@ -178,6 +178,26 @@ def get_available_slots(worker_id, date):
     booked = [row[0][11:16] for row in rows if row[0]]
 
     return [slot for slot in SLOTS if slot not in booked]
+
+@app.route("/api/slots/<slug>")
+def get_slots_api(slug):
+    date = request.args.get("date")
+
+    cur = db_query(
+        "SELECT id FROM workers WHERE slug=%s",
+        (slug,)
+    )
+
+    worker = cur.fetchone() if cur else None
+
+    if not worker:
+        return jsonify({"slots": []})
+
+    worker_id = worker[0]
+
+    slots = get_available_slots(worker_id, date) if date else SLOTS
+
+    return jsonify({"slots": slots})
 # =========================
 # ADMIN CREATE WORKER
 # =========================

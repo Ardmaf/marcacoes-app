@@ -206,7 +206,7 @@ def worker_public(slug):
         servico = request.form["servico"]
         date = request.form["date"]
         time = request.form["time"]
-        data = f"{date} {time}"
+        data = f"{date}T{time}:00"
 
         # 🚫 VERIFICAR SE JÁ EXISTE MARCAÇÃO
         cursor.execute("""

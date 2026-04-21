@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     worker_id INTEGER,
     client_name TEXT,
     service TEXT,
-    date TEXT
+    date TIMESTAMP
 )
 """)
 
@@ -148,7 +148,7 @@ def worker_public(slug):
             VALUES (%s, %s, %s, %s)
         """, (worker_id, nome, servico, data))
 
-        return "✅ Marcação feita com sucesso!"
+        return redirect(f"/{slug}?success=1")
 
     # =========================
     # GET → slots sempre calculados aqui

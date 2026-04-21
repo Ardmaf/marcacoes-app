@@ -166,13 +166,16 @@ def worker_public(slug):
             }
 
             service.events().insert(calendarId="primary", body=event).execute()
-
+    
         return "✅ Marcação feita com sucesso!"
 
     # =========================
     # GET SLOTS
     # =========================
-    available_slots = SLOTS
+    if request.method == "POST":
+        available_slots = SLOTS
+    else:
+        available_slots = get_available_slots(worker_id, date) if date else SLOTS
 
     return render_template(
         "worker.html",
@@ -180,6 +183,20 @@ def worker_public(slug):
         slots=available_slots
     )
 
+def get_available_slots(worker_id, date):
+    cur = db_query("""
+        SELECT date FROM bookings
+        WHERE worker_id=%s AND date LIKE %s
+    """, (worker_id, date + "%"))
+
+    if not cur:
+        return SLOTS
+
+    rows = cur.fetchall()
+
+    booked = [row[0][11:16] for row in rows]
+
+    return [slot for slot in SLOTS if slot not in booked]
 
 # =========================
 # ADMIN CREATE WORKER

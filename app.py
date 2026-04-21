@@ -101,7 +101,18 @@ def worker_public(slug):
         servico = request.form["servico"]
         data = request.form["data"]
 
-        # guardar marcação
+        # 🚫 VERIFICAR SE JÁ EXISTE MARCAÇÃO
+        cursor.execute("""
+            SELECT * FROM bookings 
+            WHERE worker_id=? AND date=?
+        """, (worker_id, data))
+
+        existing = cursor.fetchone()
+
+        if existing:
+            return "❌ Este horário já está ocupado. Escolhe outro."
+
+        # ✅ GUARDAR MARCAÇÃO
         cursor.execute("""
             INSERT INTO bookings (worker_id, client_name, service, date)
             VALUES (?, ?, ?, ?)
@@ -122,7 +133,7 @@ def worker_public(slug):
                     "timeZone": "Europe/Lisbon"
                 },
                 "end": {
-                    "dateTime": data + ":00",
+                    "dateTime": data + ":30",  # duração 30 min
                     "timeZone": "Europe/Lisbon"
                 }
             }
@@ -132,7 +143,7 @@ def worker_public(slug):
                 body=event
             ).execute()
 
-        return "Marcação feita com sucesso!"
+        return "✅ Marcação feita com sucesso!"
 
     return render_template_string(FORM, name=name, slug=slug)
 

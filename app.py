@@ -219,8 +219,18 @@ def worker_dashboard(slug):
 # =========================
 # ADMIN - CRIAR WORKER
 # =========================
-@app.route("/admin/create_worker", methods=["POST"])
+@app.route("/admin/create_worker", methods=["GET", "POST"])
 def create_worker():
+    if request.method == "GET":
+        return """
+        <form method="POST">
+            Password: <input name="password"><br>
+            Nome: <input name="name"><br>
+            Slug: <input name="slug"><br>
+            <button type="submit">Criar Worker</button>
+        </form>
+        """
+
     password = request.form.get("password")
 
     if password != ADMIN_PASSWORD:

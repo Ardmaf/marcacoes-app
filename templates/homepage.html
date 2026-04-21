@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcações Online</title>
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body{
+        background: linear-gradient(135deg,#0f0f0f,#1c1c1c);
+        color:white;
+        min-height:100vh;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+    }
+
+    .card{
+        background:#1e1e1e;
+        padding:30px;
+        border-radius:16px;
+        width:100%;
+        max-width:500px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.5);
+        text-align:center;
+    }
+
+    h1{
+        font-size:28px;
+        margin-bottom:10px;
+    }
+
+    p{
+        opacity:0.7;
+        margin-bottom:20px;
+    }
+
+    input{
+        width:100%;
+        padding:12px;
+        margin-top:10px;
+        border:none;
+        border-radius:10px;
+        background:#2a2a2a;
+        color:white;
+        outline:none;
+    }
+
+    button{
+        width:100%;
+        padding:12px;
+        margin-top:15px;
+        border:none;
+        border-radius:10px;
+        background:#4CAF50;
+        color:white;
+        font-weight:bold;
+        cursor:pointer;
+        transition:0.3s;
+    }
+
+    button:hover{
+        background:#45a049;
+    }
+
+    .workers{
+        margin-top:20px;
+        text-align:left;
+    }
+
+    .worker{
+        background:#2a2a2a;
+        padding:10px;
+        border-radius:10px;
+        margin-top:8px;
+    }
+
+    .footer{
+        margin-top:20px;
+        font-size:12px;
+        opacity:0.5;
+    }
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🔥 Marcações Online</h1>
+    <p>Escolhe o teu profissional e marca o teu horário</p>
+
+    <input type="text" placeholder="Procura trabalhador (slug)...">
+    <button>Entrar</button>
+
+    <div class="workers">
+        <h3>Exemplo de acessos:</h3>
+        <div class="worker">/barbearia</div>
+        <div class="worker">/joao</div>
+        <div class="worker">/maria</div>
+    </div>
+
+    <div class="footer">
+        Sistema de agendamento profissional 🚀
+    </div>
+</div>
+
+</body>
+</html>

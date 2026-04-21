@@ -97,7 +97,6 @@ input, select {
     background: linear-gradient(135deg,#4f9cff,#6c5ce7);
 }
 
-<div id="msg" style="margin-top:10px;"></div>
     
 /* BUTTON */
 button {
@@ -136,7 +135,7 @@ button:active {
     <h1>{{ name }}</h1>
     <div class="subtitle">Escolhe o teu horário</div>
 
-    <form method="POST" id="form">
+    <form id="form">
 
         <input name="nome" placeholder="O teu nome" required>
 
@@ -160,6 +159,8 @@ button:active {
         <input type="hidden" name="time" id="time">
 
         <button type="submit">Confirmar marcação</button>
+
+        <div id="msg" style="margin-top:10px;"></div>
 
         <div class="loading" id="loading">A processar marcação...</div>
 

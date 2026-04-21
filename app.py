@@ -80,6 +80,10 @@ FORM = """
 # =========================
 # PÁGINA PÚBLICA (CLIENTE)
 # =========================
+@app.route("/")
+def home():
+    return "Sistema de marcações online ativo 🚀"
+    
 @app.route("/<slug>", methods=["GET", "POST"])
 def worker_public(slug):
     cursor.execute("SELECT id, name, token, active FROM workers WHERE slug=?", (slug,))
